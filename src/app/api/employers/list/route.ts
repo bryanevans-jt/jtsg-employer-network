@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
     const active = list
       .filter((e) => e.status === "Active Partner")
       .sort((a, b) => {
-        const av = (a as Record<string, unknown>)[validSort];
-        const bv = (b as Record<string, unknown>)[validSort];
+        const av = (a as unknown as Record<string, unknown>)[validSort];
+        const bv = (b as unknown as Record<string, unknown>)[validSort];
         if (av == null && bv == null) return 0;
         if (av == null) return validOrder === "asc" ? 1 : -1;
         if (bv == null) return validOrder === "asc" ? -1 : 1;
