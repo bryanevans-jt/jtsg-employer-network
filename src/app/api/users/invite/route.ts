@@ -42,7 +42,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const redirectTo = `${request.nextUrl.origin}/auth/callback?next=/reset-password`;
+  // Use APP_URL (server-only, read at runtime) so invite links always point to your live site
+  const baseUrl =
+    process.env.APP_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    request.nextUrl.origin;
+  const redirectTo = `${baseUrl.replace(/\/$/, "")}/auth/callback?next=/reset-password`;
 
   const {
     data: inviteData,
