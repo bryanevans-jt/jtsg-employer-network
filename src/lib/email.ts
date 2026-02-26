@@ -1,14 +1,14 @@
 import { Resend } from "resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const from = process.env.FROM_EMAIL || "JTSG Employer Network <onboarding@resend.dev>";
-
 export async function sendNewEmployerNotificationToCRS(employer: {
   id: string;
   company_name: string;
   created_at: string;
 }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+
   const supabase = createAdminClient();
   const { data: crsProfiles } = await supabase
     .from("profiles")
@@ -21,6 +21,8 @@ export async function sendNewEmployerNotificationToCRS(employer: {
   const date = new Date(employer.created_at).toLocaleDateString("en-US", {
     dateStyle: "medium",
   });
+  const from = process.env.FROM_EMAIL || "JTSG Employer Network <onboarding@resend.dev>";
+  const resend = new Resend(apiKey);
 
   await resend.emails.send({
     from,
