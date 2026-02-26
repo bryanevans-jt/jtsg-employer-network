@@ -5,7 +5,7 @@ import {
   canEditEmployers,
   canDeleteEmployers,
 } from "@/lib/auth";
-import type { Employer } from "@/types/database";
+import type { AppRole, Employer } from "@/types/database";
 
 export async function PATCH(
   request: NextRequest,
@@ -27,7 +27,7 @@ export async function PATCH(
     .eq("id", user.id)
     .single();
 
-  if (!profile || !canEditEmployers(profile.role as string)) {
+  if (!profile || !canEditEmployers(profile.role as AppRole)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -97,7 +97,7 @@ export async function DELETE(
     .eq("id", user.id)
     .single();
 
-  if (!profile || !canDeleteEmployers(profile.role as string)) {
+  if (!profile || !canDeleteEmployers(profile.role as AppRole)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

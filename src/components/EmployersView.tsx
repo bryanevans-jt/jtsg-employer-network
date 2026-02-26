@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Employer, AppRole } from "@/types/database";
 import { EmployerTable } from "./EmployerTable";
 import { EmployerMap } from "./EmployerMap";
@@ -19,7 +19,7 @@ export function EmployersView({ role }: EmployersViewProps) {
   const [showMap, setShowMap] = useState(false);
   const [canViewAll, setCanViewAll] = useState(false);
 
-  const fetchEmployers = async () => {
+  const fetchEmployers = useCallback(async () => {
     setLoading(true);
     const res = await fetch(
       `/api/employers/list?sort=${sort}&order=${order}`
@@ -33,11 +33,11 @@ export function EmployersView({ role }: EmployersViewProps) {
     setEmployers(data.employers ?? []);
     setCanViewAll(data.canViewAll ?? false);
     setLoading(false);
-  };
+  }, [sort, order]);
 
   useEffect(() => {
     fetchEmployers();
-  }, [sort, order]);
+  }, [fetchEmployers]);
 
   const isCRS = role === "crs";
   const newSubmissions = isCRS

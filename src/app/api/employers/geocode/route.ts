@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canEditEmployers } from "@/lib/auth";
+import type { AppRole } from "@/types/database";
 
 /**
  * Geocode a single employer address using Nominatim (OSM).
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
     .eq("id", user.id)
     .single();
 
-  if (!profile || !canEditEmployers(profile.role as string)) {
+  if (!profile || !canEditEmployers(profile.role as AppRole)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
