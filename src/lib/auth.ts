@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { AppRole, Profile } from "@/types/database";
+import type { Profile } from "@/types/database";
 
 export async function getProfile(): Promise<Profile | null> {
   const supabase = await createClient();
@@ -17,22 +17,11 @@ export async function getProfile(): Promise<Profile | null> {
   return profile as Profile | null;
 }
 
-export function canViewAllEmployers(role: AppRole): boolean {
-  return ["admin", "director", "crs"].includes(role);
-}
-
-export function canViewActiveOnly(role: AppRole): boolean {
-  return ["supervisor", "employment_specialist"].includes(role);
-}
-
-export function canEditEmployers(role: AppRole): boolean {
-  return ["admin", "director", "crs"].includes(role);
-}
-
-export function canDeleteEmployers(role: AppRole): boolean {
-  return ["admin", "director"].includes(role);
-}
-
-export function canManageUsers(role: AppRole): boolean {
-  return role === "admin";
-}
+// Re-export permission helpers for server-side use (API routes, server components)
+export {
+  canViewAllEmployers,
+  canViewActiveOnly,
+  canEditEmployers,
+  canDeleteEmployers,
+  canManageUsers,
+} from "@/lib/permissions";

@@ -5,7 +5,7 @@ import type { Employer, AppRole } from "@/types/database";
 import {
   canEditEmployers,
   canDeleteEmployers,
-} from "@/lib/auth";
+} from "@/lib/permissions";
 
 interface EmployerDetailModalProps {
   employer: Employer;

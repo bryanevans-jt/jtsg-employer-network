@@ -5,7 +5,7 @@ import type { Employer, AppRole } from "@/types/database";
 import {
   canEditEmployers,
   canDeleteEmployers,
-} from "@/lib/auth";
+} from "@/lib/permissions";
 import { EmployerRow } from "./EmployerRow";
 import { EmployerDetailModal } from "./EmployerDetailModal";
 
