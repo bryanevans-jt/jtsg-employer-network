@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     process.env.NEXT_PUBLIC_APP_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
     request.nextUrl.origin;
-  const redirectTo = `${baseUrl.replace(/\/$/, "")}/auth/callback?next=/reset-password`;
+  const redirectTo = `${baseUrl.replace(/\/$/, "")}/auth/accept-invite?next=/reset-password`;
 
   const {
     data: inviteData,
