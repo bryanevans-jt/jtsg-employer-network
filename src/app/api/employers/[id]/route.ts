@@ -5,6 +5,7 @@ import {
   canEditEmployers,
   canDeleteEmployers,
 } from "@/lib/auth";
+import { normalizeStreet, normalizeCity, normalizeState, normalizeCounty } from "@/lib/address";
 import type { AppRole, Employer } from "@/types/database";
 
 export async function PATCH(
@@ -62,6 +63,15 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
   }
+
+  if (updates.address_street !== undefined)
+    updates.address_street = normalizeStreet(updates.address_street ?? "");
+  if (updates.address_city !== undefined)
+    updates.address_city = normalizeCity(updates.address_city ?? "");
+  if (updates.address_state !== undefined)
+    updates.address_state = normalizeState(updates.address_state ?? "");
+  if (updates.address_county !== undefined)
+    updates.address_county = normalizeCounty(updates.address_county ?? "");
 
   const { data: employer, error } = await admin
     .from("employers")

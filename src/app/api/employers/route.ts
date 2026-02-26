@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendNewEmployerNotificationToCRS } from "@/lib/email";
+import { normalizeAddress } from "@/lib/address";
 import type { EmployerInsert } from "@/types/database";
 
 export async function POST(request: NextRequest) {
@@ -38,15 +39,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const addr = normalizeAddress({
+      address_street,
+      address_city,
+      address_state,
+      address_county,
+    });
+
     const supabase = createAdminClient();
     const { data: employer, error } = await supabase
       .from("employers")
       .insert({
         company_name: company_name.trim(),
-        address_street: address_street.trim(),
-        address_city: address_city.trim(),
-        address_state: address_state.trim(),
-        address_county: address_county.trim(),
+        address_street: addr.address_street,
+        address_city: addr.address_city,
+        address_state: addr.address_state,
+        address_county: addr.address_county,
         phone: phone?.trim() || null,
         website: website?.trim() || null,
         industry: industry.trim(),

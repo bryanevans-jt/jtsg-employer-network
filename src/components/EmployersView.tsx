@@ -39,12 +39,12 @@ export function EmployersView({ role }: EmployersViewProps) {
     fetchEmployers();
   }, [fetchEmployers]);
 
-  const isCRS = role === "crs";
-  const newSubmissions = isCRS
+  const canViewAllEmployers = canViewAll;
+  const newSubmissions = canViewAllEmployers
     ? employers.filter((e) => e.status === "New Submission")
     : [];
   const activePartners = employers.filter((e) => e.status === "Active Partner");
-  const theRest = isCRS
+  const theRest = canViewAllEmployers
     ? employers.filter((e) => e.status !== "New Submission" && e.status !== "Active Partner")
     : [];
 
@@ -98,7 +98,7 @@ export function EmployersView({ role }: EmployersViewProps) {
         </div>
       )}
 
-      {isCRS && newSubmissions.length > 0 && (
+      {canViewAllEmployers && newSubmissions.length > 0 && (
         <section>
           <h2 className="text-lg font-semibold text-stone-800 mb-3">
             New submissions (newest first)
@@ -124,7 +124,7 @@ export function EmployersView({ role }: EmployersViewProps) {
         </section>
       )}
 
-      {isCRS && theRest.length > 0 && (
+      {canViewAllEmployers && theRest.length > 0 && (
         <section>
           <h2 className="text-lg font-semibold text-stone-800 mb-3">
             Other

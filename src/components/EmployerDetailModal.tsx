@@ -279,15 +279,27 @@ export function EmployerDetailModal({
               )}
               <p>
                 <span className="text-stone-500">Status:</span>{" "}
-                <span
-                  className={
-                    employer.status === "New Submission"
-                      ? "text-amber-700"
-                      : "text-green-700"
-                  }
-                >
-                  {employer.status}
-                </span>
+                {canEdit && !editing ? (
+                  <select
+                    value={employer.status}
+                    onChange={(e) => handleStatusChange(e.target.value as "New Submission" | "Active Partner")}
+                    disabled={saving}
+                    className="rounded border border-stone-300 px-2 py-1 text-sm font-medium text-stone-800 disabled:opacity-60"
+                  >
+                    <option value="New Submission">New Submission</option>
+                    <option value="Active Partner">Active Partner</option>
+                  </select>
+                ) : (
+                  <span
+                    className={
+                      employer.status === "New Submission"
+                        ? "text-amber-700"
+                        : "text-green-700"
+                    }
+                  >
+                    {employer.status}
+                  </span>
+                )}
               </p>
             </div>
           )}
@@ -300,16 +312,6 @@ export function EmployerDetailModal({
                 className="rounded-lg bg-stone-200 px-4 py-2 text-sm font-medium text-stone-800 hover:bg-stone-300"
               >
                 Edit
-              </button>
-            )}
-            {canEdit && role === "crs" && employer.status === "New Submission" && !editing && (
-              <button
-                type="button"
-                onClick={() => handleStatusChange("Active Partner")}
-                disabled={saving}
-                className="rounded-lg bg-jtsg-green px-4 py-2 text-sm font-medium text-white hover:bg-jtsg-green/90 disabled:opacity-60"
-              >
-                Mark as Active Partner
               </button>
             )}
             {editing && (

@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
     query = query.eq("status", "Active Partner");
   }
 
-  // CRS: New Submissions first (newest at top), then Active Partners by chosen sort
-  if (role === "crs") {
+  // Admin, Director, CRS: New Submissions first (newest at top), then Active Partners by chosen sort
+  if (canViewAllEmployers(role)) {
     const { data: all, error: err } = await query;
     if (err) {
       console.error("Employers list error:", err);
