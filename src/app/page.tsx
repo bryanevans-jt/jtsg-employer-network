@@ -3,26 +3,32 @@ import { EmployerFooter } from "@/components/EmployerFooter";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-jtsg-green text-white shadow">
-        <div className="max-w-4xl mx-auto px-4 py-6 flex flex-wrap items-center gap-4">
-          <Link href="/" className="flex items-center gap-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/jtsg-logo.png"
-              alt=""
-              width={72}
-              height={72}
-              className="h-[72px] w-auto object-contain shrink-0"
-            />
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              Joshua Tree Service Group Employer Network
-            </h1>
-          </Link>
+    <div className="relative min-h-screen flex flex-col">
+      {/* Background logo: 20% opacity, black areas transparent via mix-blend-mode */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center"
+        aria-hidden
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/jtsg-logo.png"
+          alt=""
+          className="h-full w-full max-h-[90vh] max-w-3xl object-contain opacity-20 mix-blend-screen"
+        />
+      </div>
+
+      <header className="relative z-10 bg-jtsg-green text-white shadow">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Joshua Tree Service Group
+          </h1>
+          <p className="text-jtsg-sand/90 text-sm mt-1">
+            Employer Network
+          </p>
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-8">
+      <main className="relative z-10 flex-1 max-w-4xl w-full mx-auto px-4 py-8">
         <p className="text-stone-600 mb-8">
           JTSG is a service provider for the Georgia Vocational Rehabilitation
           Agency. We help clients learn job skills and find meaningful
@@ -47,7 +53,9 @@ export default function HomePage() {
         </div>
       </main>
 
-      <EmployerFooter />
+      <footer className="relative z-10">
+        <EmployerFooter />
+      </footer>
     </div>
   );
 }
