@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --jtsg-green: #2d5a3d;
+  --jtsg-sand: #e8dcc4;
+  --jtsg-sage: #9cb4a3;
+}
+
+body {
+  @apply bg-stone-50 text-stone-900 antialiased;
+}
+
+/* Leaflet needs explicit height when in a container */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+}
