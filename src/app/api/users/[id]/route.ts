@@ -51,3 +51,47 @@ export async function PATCH(
   }
   return NextResponse.json({ user: updated });
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (user.id === id) {
+    return NextResponse.json(
+      { error: "You cannot delete your own account." },
+      { status: 400 }
+    );
+  }
+
+  const admin = createAdminClient();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || !canManageUsers(profile.role as AppRole)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { error: deleteError } = await admin.auth.admin.deleteUser(id);
+
+  if (deleteError) {
+    console.error("User delete error:", deleteError);
+    return NextResponse.json(
+      { error: deleteError.message ?? "Failed to remove user." },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ ok: true });
+}

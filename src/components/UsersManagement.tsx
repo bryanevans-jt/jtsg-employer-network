@@ -31,6 +31,23 @@ export function UsersManagement() {
     fetchUsers().finally(() => setLoading(false));
   }, []);
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDeleteUser = async (userId: string, email: string) => {
+    const confirmed = window.confirm(
+      `Remove ${email} from JTSG staff? They will no longer be able to sign in. This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setDeletingId(userId);
+    const res = await fetch(`/api/users/${userId}`, { method: "DELETE" });
+    setDeletingId(null);
+    if (res.ok) fetchUsers();
+    else {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? "Failed to remove user.");
+    }
+  };
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setInviteLoading(true);
@@ -147,6 +164,9 @@ export function UsersManagement() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-stone-600 uppercase">
                   Role
                 </th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-stone-600 uppercase">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-200">
@@ -160,6 +180,16 @@ export function UsersManagement() {
                     <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-stone-700">
                       {ROLE_LABELS[u.role]}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteUser(u.id, u.email)}
+                      disabled={deletingId === u.id}
+                      className="text-sm text-red-600 hover:text-red-800 disabled:opacity-60"
+                    >
+                      {deletingId === u.id ? "Removing…" : "Remove"}
+                    </button>
                   </td>
                 </tr>
               ))}

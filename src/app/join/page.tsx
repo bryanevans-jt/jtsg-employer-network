@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { EmployerSignupForm } from "@/components/EmployerSignupForm";
+import { EmployerFooter } from "@/components/EmployerFooter";
 
 const INDUSTRIES = [
   "Retail / Stocking",
@@ -23,16 +24,28 @@ export default function JoinPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-jtsg-green text-white shadow">
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          <Link
-            href="/"
-            className="text-jtsg-sand/90 text-sm hover:text-white"
-          >
-            ← Back
+        <div className="max-w-2xl mx-auto px-4 py-6 flex flex-wrap items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/jtsg-logo.png"
+              alt=""
+              width={56}
+              height={56}
+              className="h-14 w-auto object-contain"
+            />
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight mt-2">
-            Join the Employer Network
-          </h1>
+          <div className="min-w-0">
+            <Link
+              href="/"
+              className="text-jtsg-sand/90 text-sm hover:text-white"
+            >
+              ← Back
+            </Link>
+            <h1 className="text-2xl font-bold tracking-tight mt-1">
+              Join the Employer Network
+            </h1>
+          </div>
         </div>
       </header>
 
@@ -64,6 +77,7 @@ export default function JoinPage() {
           </>
         )}
       </main>
+      <EmployerFooter />
     </div>
   );
 }

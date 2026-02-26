@@ -1,16 +1,24 @@
 import Link from "next/link";
+import { EmployerFooter } from "@/components/EmployerFooter";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-jtsg-green text-white shadow">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <h1 className="text-2xl font-bold tracking-tight">
-            Joshua Tree Service Group
-          </h1>
-          <p className="text-jtsg-sand/90 text-sm mt-1">
-            Employer Network
-          </p>
+        <div className="max-w-4xl mx-auto px-4 py-6 flex flex-wrap items-center gap-4">
+          <Link href="/" className="flex items-center gap-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/jtsg-logo.png"
+              alt=""
+              width={72}
+              height={72}
+              className="h-[72px] w-auto object-contain shrink-0"
+            />
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              Joshua Tree Service Group Employer Network
+            </h1>
+          </Link>
         </div>
       </header>
 
@@ -39,9 +47,7 @@ export default function HomePage() {
         </div>
       </main>
 
-      <footer className="border-t border-stone-200 py-4 text-center text-sm text-stone-500">
-        © {new Date().getFullYear()} Joshua Tree Service Group
-      </footer>
+      <EmployerFooter />
     </div>
   );
 }
