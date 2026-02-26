@@ -4,7 +4,7 @@ import { EmployerFooter } from "@/components/EmployerFooter";
 export default function HomePage() {
   return (
     <div className="relative min-h-screen flex flex-col">
-      {/* Background logo: 20% opacity, black areas transparent via mix-blend-mode */}
+      {/* Background logo: 20% opacity (use a PNG with transparent background) */}
       <div
         className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center"
         aria-hidden
@@ -13,7 +13,7 @@ export default function HomePage() {
         <img
           src="/jtsg-logo.png"
           alt=""
-          className="h-full w-full max-h-[90vh] max-w-3xl object-contain opacity-20 mix-blend-screen"
+          className="h-full w-full max-h-[90vh] max-w-3xl object-contain opacity-20"
         />
       </div>
 
