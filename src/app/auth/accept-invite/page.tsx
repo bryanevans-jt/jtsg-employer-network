@@ -1,9 +1,10 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { StaffAuthShell } from "@/components/StaffAuthShell";
+import { inputClass, labelClass, btnPrimaryClass, alertErrorClass, alertSuccessClass } from "@/lib/ui";
 
 function parseHashParams(hash: string): Record<string, string> {
   const params: Record<string, string> = {};
@@ -23,7 +24,9 @@ function AcceptInviteContent() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
+  const [submitMessage, setSubmitMessage] = useState<{ type: "error" | "success"; text: string } | null>(
+    null
+  );
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
 
   useEffect(() => {
@@ -43,7 +46,9 @@ function AcceptInviteContent() {
           });
           if (error) throw error;
         } else {
-          setErrorMessage("Invalid or expired link. Please use the link from your invite email or request a new one.");
+          setErrorMessage(
+            "Invalid or expired link. Please use the link from your invite email or request a new one."
+          );
           setStatus("error");
           return;
         }
@@ -71,7 +76,10 @@ function AcceptInviteContent() {
     }
     const supabase = supabaseRef.current;
     if (!supabase) {
-      setSubmitMessage({ type: "error", text: "Session lost. Please use the link from your email again." });
+      setSubmitMessage({
+        type: "error",
+        text: "Session lost. Please use the link from your email again.",
+      });
       return;
     }
     setSubmitLoading(true);
@@ -93,103 +101,79 @@ function AcceptInviteContent() {
 
   if (status === "error") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-stone-100">
-        <div className="w-full max-w-sm rounded-xl bg-white shadow border border-stone-200 p-6">
-          <h1 className="text-xl font-bold text-stone-900">Invalid link</h1>
-          <p className="mt-2 text-sm text-stone-600">{errorMessage}</p>
-          <Link href="/login" className="mt-4 inline-block text-jtsg-green font-medium text-sm hover:underline">
-            ← Back to login
-          </Link>
-        </div>
-      </div>
+      <StaffAuthShell backHref="/login" backLabel="← Back to login">
+        <h1 className="text-2xl font-bold tracking-tight text-jtsg-ink">Invalid link</h1>
+        <p className="mt-3 text-sm leading-relaxed text-stone-600">{errorMessage}</p>
+      </StaffAuthShell>
     );
   }
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-stone-100">
-        <div className="w-full max-w-sm text-center">
-          <p className="text-stone-600">Setting up your account…</p>
-        </div>
-      </div>
+      <StaffAuthShell backHref="/login" backLabel="← Back to login">
+        <p className="text-center text-sm text-stone-600">Setting up your account…</p>
+      </StaffAuthShell>
     );
   }
 
   if (status === "success") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-stone-100">
-        <div className="w-full max-w-sm rounded-xl bg-white shadow border border-stone-200 p-6 text-center">
-          <p className="text-green-700 font-medium">{submitMessage?.text}</p>
+      <StaffAuthShell backHref="/login" backLabel="← Back to login">
+        <div className={alertSuccessClass}>
+          <p className="text-center text-sm font-medium">{submitMessage?.text}</p>
         </div>
-      </div>
+      </StaffAuthShell>
     );
   }
 
-  // status === "ready" – show set-password form on same page so session is not lost
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-stone-100">
-      <div className="w-full max-w-sm">
-        <Link href="/login" className="text-jtsg-green font-medium text-sm hover:underline">
-          ← Back to login
-        </Link>
-        <div className="mt-6 rounded-xl bg-white shadow border border-stone-200 p-6">
-          <h1 className="text-xl font-bold text-stone-900">Set your password</h1>
-          <p className="mt-1 text-sm text-stone-600">
-            Create a password for your account.
-          </p>
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            {submitMessage && (
-              <div
-                className={`rounded-lg px-3 py-2 text-sm ${
-                  submitMessage.type === "error"
-                    ? "bg-red-50 text-red-800"
-                    : "bg-green-50 text-green-800"
-                }`}
-              >
-                {submitMessage.text}
-              </div>
-            )}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-stone-700">
-                New password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                minLength={8}
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm focus:border-jtsg-green focus:outline-none focus:ring-1 focus:ring-jtsg-green"
-              />
-            </div>
-            <div>
-              <label htmlFor="confirm" className="block text-sm font-medium text-stone-700">
-                Confirm password
-              </label>
-              <input
-                id="confirm"
-                type="password"
-                required
-                minLength={8}
-                autoComplete="new-password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm focus:border-jtsg-green focus:outline-none focus:ring-1 focus:ring-jtsg-green"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={submitLoading}
-              className="w-full rounded-lg bg-jtsg-green px-4 py-2.5 font-medium text-white hover:bg-jtsg-green/90 disabled:opacity-60"
-            >
-              {submitLoading ? "Updating…" : "Set password"}
-            </button>
-          </form>
+    <StaffAuthShell backHref="/login" backLabel="← Back to login">
+      <h1 className="text-2xl font-bold tracking-tight text-jtsg-ink">Set your password</h1>
+      <p className="mt-2 text-sm text-stone-600">Create a password for your JTSG account.</p>
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        {submitMessage ? (
+          <div
+            className={submitMessage.type === "error" ? alertErrorClass : alertSuccessClass}
+            role="status"
+          >
+            {submitMessage.text}
+          </div>
+        ) : null}
+        <div>
+          <label htmlFor="password" className={labelClass}>
+            New password
+          </label>
+          <input
+            id="password"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={inputClass}
+          />
         </div>
-      </div>
-    </div>
+        <div>
+          <label htmlFor="confirm" className={labelClass}>
+            Confirm password
+          </label>
+          <input
+            id="confirm"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+        <button type="submit" disabled={submitLoading} className={btnPrimaryClass}>
+          {submitLoading ? "Updating…" : "Set password"}
+        </button>
+      </form>
+    </StaffAuthShell>
   );
 }
 
@@ -197,9 +181,9 @@ export default function AcceptInvitePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-stone-100">
-          <p className="text-stone-600">Loading…</p>
-        </div>
+        <StaffAuthShell backHref="/login" backLabel="← Back to login">
+          <p className="text-center text-sm text-stone-600">Loading…</p>
+        </StaffAuthShell>
       }
     >
       <AcceptInviteContent />

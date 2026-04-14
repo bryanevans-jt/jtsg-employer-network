@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { canEditEmployers } from "@/lib/auth";
+import { loadStaffContext } from "@/lib/api-guards";
+import { canEditEmployers } from "@/lib/permissions";
 import type { AppRole } from "@/types/database";
 
 /**
@@ -9,22 +8,12 @@ import type { AppRole } from "@/types/database";
  * Rate limit: 1 request per second. Call from client with delay between requests.
  */
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const ctx = await loadStaffContext();
+  if (!ctx.ok) return ctx.response;
 
-  const admin = createAdminClient();
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || !canEditEmployers(profile.role as AppRole)) {
+  const { admin, profile } = ctx;
+  const role = profile.role as AppRole;
+  if (!canEditEmployers(role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

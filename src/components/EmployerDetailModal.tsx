@@ -1,17 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import type { Employer, AppRole } from "@/types/database";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import type { Employer, AppRole, EmployerActivity } from "@/types/database";
 import {
   canEditEmployers,
   canDeleteEmployers,
 } from "@/lib/permissions";
+import {
+  EMPLOYER_STATUSES,
+  EMPLOYER_STATUS_LABELS,
+  statusBadgeClass,
+} from "@/lib/employer-status";
+import {
+  inputClassCompact,
+  labelClass,
+  alertErrorClass,
+  btnPrimarySmClass,
+  btnSecondarySmClass,
+  btnMutedSmClass,
+  btnDangerSmClass,
+} from "@/lib/ui";
 
 interface EmployerDetailModalProps {
   employer: Employer;
   role: AppRole;
   onClose: () => void;
   onUpdate: () => void;
+}
+
+type StaffOption = { id: string; full_name: string | null; email: string };
+
+function activitySummary(a: EmployerActivity): string {
+  if (a.action === "status_change") {
+    const d = a.details as { from?: string; to?: string };
+    return `Status: ${d.from ?? "?"} → ${d.to ?? "?"}`;
+  }
+  if (a.action === "field_update") {
+    const d = a.details as { field?: string };
+    return `Updated ${d.field ?? "field"}`;
+  }
+  return a.action;
 }
 
 export function EmployerDetailModal({
@@ -21,17 +49,50 @@ export function EmployerDetailModal({
   onUpdate,
 }: EmployerDetailModalProps) {
   const [employer, setEmployer] = useState(initial);
+  const [activity, setActivity] = useState<EmployerActivity[]>([]);
+  const [staffOptions, setStaffOptions] = useState<StaffOption[]>([]);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(initial);
   const canEdit = canEditEmployers(role);
   const canDelete = canDeleteEmployers(role);
+  const editingRef = useRef(editing);
+  editingRef.current = editing;
+
+  const loadDetail = useCallback(async (id: string) => {
+    const res = await fetch(`/api/employers/${id}?include_activity=1`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.employer) {
+      setEmployer(data.employer);
+      if (!editingRef.current) setForm(data.employer);
+    }
+    setActivity(data.activity ?? []);
+  }, []);
 
   useEffect(() => {
     setEmployer(initial);
     setForm(initial);
   }, [initial]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadDetail(initial.id).then(() => {
+      if (cancelled) return;
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [initial.id, loadDetail]);
+
+  useEffect(() => {
+    if (!canEdit) return;
+    fetch("/api/users/staff-options")
+      .then((r) => r.json())
+      .then((d) => setStaffOptions(d.staff ?? []))
+      .catch(() => setStaffOptions([]));
+  }, [canEdit]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -53,6 +114,9 @@ export function EmployerDetailModal({
         contact_email: form.contact_email,
         contact_title: form.contact_title || null,
         status: form.status,
+        internal_notes: form.internal_notes ?? "",
+        next_follow_up_date: form.next_follow_up_date || null,
+        assigned_staff_id: form.assigned_staff_id || null,
       }),
     });
     if (!res.ok) {
@@ -66,10 +130,11 @@ export function EmployerDetailModal({
     setForm(data.employer);
     setEditing(false);
     onUpdate();
+    await loadDetail(employer.id);
     setSaving(false);
   };
 
-  const handleStatusChange = async (status: "New Submission" | "Active Partner") => {
+  const handleStatusChange = async (status: (typeof EMPLOYER_STATUSES)[number]) => {
     if (!canEdit) return;
     setSaving(true);
     setError(null);
@@ -88,6 +153,7 @@ export function EmployerDetailModal({
     setEmployer(data.employer);
     setForm(data.employer);
     onUpdate();
+    await loadDetail(employer.id);
     setSaving(false);
   };
 
@@ -109,245 +175,326 @@ export function EmployerDetailModal({
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const assignedStaffLabel = useMemo(() => {
+    if (!employer.assigned_staff_id) return null;
+    const s = staffOptions.find((o) => o.id === employer.assigned_staff_id);
+    if (s) return s.full_name?.trim() || s.email;
+    return "Staff member";
+  }, [employer.assigned_staff_id, staffOptions]);
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-200/90 bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6">
+        <div className="p-6 pb-0 sm:p-8 sm:pb-0">
           <div className="flex items-start justify-between gap-4">
-            <h2 className="text-xl font-bold text-stone-900">
+            <h2 className="text-xl font-bold tracking-tight text-jtsg-ink sm:text-2xl">
               {editing ? "Edit employer" : employer.company_name}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="text-stone-400 hover:text-stone-600"
+              className="-m-1 rounded-full p-2 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
               aria-label="Close"
             >
               ×
             </button>
           </div>
 
-          {error && (
-            <div className="mt-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-800">
-              {error}
-            </div>
-          )}
+          {error ? <div className={`mt-4 ${alertErrorClass}`}>{error}</div> : null}
 
           {editing ? (
-            <div className="mt-4 space-y-3">
+            <div className="mt-6 space-y-4">
               <input
                 value={form.company_name}
                 onChange={(e) => update("company_name", e.target.value)}
                 placeholder="Company name"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                className={inputClassCompact}
               />
               <input
                 value={form.address_street}
                 onChange={(e) => update("address_street", e.target.value)}
                 placeholder="Street"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                className={inputClassCompact}
               />
               <div className="grid grid-cols-3 gap-2">
                 <input
                   value={form.address_city}
                   onChange={(e) => update("address_city", e.target.value)}
                   placeholder="City"
-                  className="rounded-lg border border-stone-300 px-3 py-2"
+                  className={inputClassCompact}
                 />
                 <input
                   value={form.address_state}
                   onChange={(e) => update("address_state", e.target.value)}
                   placeholder="State"
-                  className="rounded-lg border border-stone-300 px-3 py-2"
+                  className={inputClassCompact}
                 />
                 <input
                   value={form.address_county}
                   onChange={(e) => update("address_county", e.target.value)}
                   placeholder="County"
-                  className="rounded-lg border border-stone-300 px-3 py-2"
+                  className={inputClassCompact}
                 />
               </div>
               <input
                 value={form.phone ?? ""}
                 onChange={(e) => update("phone", e.target.value)}
                 placeholder="Phone"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                className={inputClassCompact}
               />
               <input
                 value={form.website ?? ""}
                 onChange={(e) => update("website", e.target.value)}
                 placeholder="Website"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                className={inputClassCompact}
               />
               <input
                 value={form.industry}
                 onChange={(e) => update("industry", e.target.value)}
                 placeholder="Industry"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                className={inputClassCompact}
               />
-              <hr />
+              <div className="border-t border-stone-100 pt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                  Contact
+                </p>
+              </div>
               <input
                 value={form.contact_name}
                 onChange={(e) => update("contact_name", e.target.value)}
                 placeholder="Contact name"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                className={inputClassCompact}
               />
               <input
                 value={form.contact_title ?? ""}
                 onChange={(e) => update("contact_title", e.target.value)}
                 placeholder="Contact title"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                className={inputClassCompact}
               />
               <input
                 value={form.contact_phone ?? ""}
                 onChange={(e) => update("contact_phone", e.target.value)}
                 placeholder="Contact phone"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                className={inputClassCompact}
               />
               <input
                 value={form.contact_email}
                 onChange={(e) => update("contact_email", e.target.value)}
                 placeholder="Contact email"
                 type="email"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                className={inputClassCompact}
               />
-              {canEdit && role !== "crs" && (
+              {canEdit ? (
                 <select
                   value={form.status}
                   onChange={(e) =>
-                    update("status", e.target.value as "New Submission" | "Active Partner")
+                    update("status", e.target.value as (typeof EMPLOYER_STATUSES)[number])
                   }
-                  className="w-full rounded-lg border border-stone-300 px-3 py-2"
+                  className={inputClassCompact}
                 >
-                  <option value="New Submission">New Submission</option>
-                  <option value="Active Partner">Active Partner</option>
+                  {EMPLOYER_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {EMPLOYER_STATUS_LABELS[s]}
+                    </option>
+                  ))}
                 </select>
-              )}
+              ) : null}
+              <label className={labelClass}>
+                Internal notes (staff only)
+                <textarea
+                  value={form.internal_notes ?? ""}
+                  onChange={(e) => update("internal_notes", e.target.value)}
+                  rows={4}
+                  className={`${inputClassCompact} mt-1 min-h-[100px] resize-y`}
+                  placeholder="Context for the team — not shown to employers."
+                />
+              </label>
+              <label className={labelClass}>
+                Next follow-up
+                <input
+                  type="date"
+                  value={(form.next_follow_up_date ?? "").slice(0, 10)}
+                  onChange={(e) => update("next_follow_up_date", e.target.value || null)}
+                  className={`${inputClassCompact} mt-1`}
+                />
+              </label>
+              <label className={labelClass}>
+                Assigned staff
+                <select
+                  value={form.assigned_staff_id ?? ""}
+                  onChange={(e) => update("assigned_staff_id", e.target.value || null)}
+                  className={`${inputClassCompact} mt-1`}
+                >
+                  <option value="">— Unassigned —</option>
+                  {staffOptions.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.full_name?.trim() || s.email}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
           ) : (
-            <div className="mt-4 space-y-2 text-sm">
+            <div className="mt-6 space-y-2.5 text-sm leading-relaxed text-stone-700">
               <p>
-                <span className="text-stone-500">Address:</span>{" "}
-                {employer.address_street}, {employer.address_city},{" "}
-                {employer.address_state} {employer.address_county} County
+                <span className="font-medium text-stone-500">Address:</span>{" "}
+                {employer.address_street}, {employer.address_city}, {employer.address_state} ·{" "}
+                {employer.address_county} County
               </p>
-              {employer.phone && (
+              {employer.phone ? (
                 <p>
-                  <span className="text-stone-500">Phone:</span> {employer.phone}
+                  <span className="font-medium text-stone-500">Phone:</span> {employer.phone}
                 </p>
-              )}
-              {employer.website && (
+              ) : null}
+              {employer.website ? (
                 <p>
-                  <span className="text-stone-500">Website:</span>{" "}
+                  <span className="font-medium text-stone-500">Website:</span>{" "}
                   <a
                     href={employer.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-jtsg-green hover:underline"
+                    className="font-medium text-jtsg-green underline decoration-jtsg-green/30 underline-offset-2 hover:decoration-jtsg-green"
                   >
                     {employer.website}
                   </a>
                 </p>
-              )}
+              ) : null}
               <p>
-                <span className="text-stone-500">Industry:</span> {employer.industry}
+                <span className="font-medium text-stone-500">Industry:</span> {employer.industry}
               </p>
               <p>
-                <span className="text-stone-500">Contact:</span> {employer.contact_name}
-                {employer.contact_title && `, ${employer.contact_title}`}
+                <span className="font-medium text-stone-500">Contact:</span> {employer.contact_name}
+                {employer.contact_title ? `, ${employer.contact_title}` : ""}
               </p>
               <p>
-                <span className="text-stone-500">Email:</span>{" "}
+                <span className="font-medium text-stone-500">Email:</span>{" "}
                 <a
                   href={`mailto:${employer.contact_email}`}
-                  className="text-jtsg-green hover:underline"
+                  className="font-medium text-jtsg-green underline decoration-jtsg-green/30 underline-offset-2 hover:decoration-jtsg-green"
                 >
                   {employer.contact_email}
                 </a>
               </p>
-              {employer.contact_phone && (
+              {employer.contact_phone ? (
                 <p>
-                  <span className="text-stone-500">Contact phone:</span>{" "}
+                  <span className="font-medium text-stone-500">Contact phone:</span>{" "}
                   {employer.contact_phone}
                 </p>
-              )}
-              <p>
-                <span className="text-stone-500">Status:</span>{" "}
+              ) : null}
+              <p className="flex flex-wrap items-center gap-2">
+                <span className="font-medium text-stone-500">Status:</span>
                 {canEdit && !editing ? (
                   <select
                     value={employer.status}
-                    onChange={(e) => handleStatusChange(e.target.value as "New Submission" | "Active Partner")}
+                    onChange={(e) =>
+                      handleStatusChange(e.target.value as (typeof EMPLOYER_STATUSES)[number])
+                    }
                     disabled={saving}
-                    className="rounded border border-stone-300 px-2 py-1 text-sm font-medium text-stone-800 disabled:opacity-60"
+                    className={`${inputClassCompact} w-auto max-w-full py-1.5 text-sm disabled:opacity-60`}
                   >
-                    <option value="New Submission">New Submission</option>
-                    <option value="Active Partner">Active Partner</option>
+                    {EMPLOYER_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {EMPLOYER_STATUS_LABELS[s]}
+                      </option>
+                    ))}
                   </select>
                 ) : (
                   <span
-                    className={
-                      employer.status === "New Submission"
-                        ? "text-amber-700"
-                        : "text-green-700"
-                    }
+                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusBadgeClass(employer.status)}`}
                   >
                     {employer.status}
                   </span>
                 )}
               </p>
+              {employer.internal_notes || canEdit ? (
+                <div className="border-t border-stone-100 pt-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                    Internal notes
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-stone-800">
+                    {employer.internal_notes?.trim() || "—"}
+                  </p>
+                </div>
+              ) : null}
+              {employer.next_follow_up_date || employer.assigned_staff_id ? (
+                <div className="flex flex-wrap gap-4 border-t border-stone-100 pt-3 text-sm">
+                  {employer.next_follow_up_date ? (
+                    <p>
+                      <span className="font-medium text-stone-500">Follow-up:</span>{" "}
+                      {new Date(employer.next_follow_up_date).toLocaleDateString()}
+                    </p>
+                  ) : null}
+                  {employer.assigned_staff_id && assignedStaffLabel ? (
+                    <p>
+                      <span className="font-medium text-stone-500">Assigned:</span>{" "}
+                      {assignedStaffLabel}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+              {activity.length > 0 ? (
+                <div className="border-t border-stone-100 pt-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                    Recent activity
+                  </p>
+                  <ul className="mt-2 max-h-40 space-y-2 overflow-y-auto text-sm text-stone-700">
+                    {activity.map((a) => (
+                      <li
+                        key={a.id}
+                        className="border-l-2 border-jtsg-sage/60 pl-3"
+                      >
+                        <span>{activitySummary(a)}</span>
+                        <span className="mt-0.5 block text-xs text-stone-500">
+                          {new Date(a.created_at).toLocaleString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           )}
 
-          <div className="mt-6 flex flex-wrap gap-2">
-            {canEdit && !editing && (
-              <button
-                type="button"
-                onClick={() => setEditing(true)}
-                className="rounded-lg bg-stone-200 px-4 py-2 text-sm font-medium text-stone-800 hover:bg-stone-300"
-              >
+          <div className="sticky bottom-0 mt-8 flex flex-wrap items-center gap-2 border-t border-stone-100 bg-white/95 py-4 backdrop-blur">
+            {canEdit && !editing ? (
+              <button type="button" onClick={() => setEditing(true)} className={btnMutedSmClass}>
                 Edit
               </button>
-            )}
-            {editing && (
+            ) : null}
+            {editing ? (
               <>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="rounded-lg bg-jtsg-green px-4 py-2 text-sm font-medium text-white hover:bg-jtsg-green/90 disabled:opacity-60"
-                >
+                <button type="button" onClick={handleSave} disabled={saving} className={btnPrimarySmClass}>
                   {saving ? "Saving…" : "Save"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setEditing(false); setForm(employer); }}
-                  className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
+                  onClick={() => {
+                    setEditing(false);
+                    setForm(employer);
+                  }}
+                  className={btnSecondarySmClass}
                 >
                   Cancel
                 </button>
               </>
-            )}
-            {canDelete && !editing && (
+            ) : null}
+            {canDelete && !editing ? (
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={saving}
-                className="rounded-lg border border-red-300 text-red-700 px-4 py-2 text-sm font-medium hover:bg-red-50 disabled:opacity-60 ml-auto"
+                className={`${btnDangerSmClass} ml-auto`}
               >
                 Delete
               </button>
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
-            >
+            ) : null}
+            <button type="button" onClick={onClose} className={btnSecondarySmClass}>
               Close
             </button>
           </div>

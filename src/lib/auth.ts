@@ -14,14 +14,20 @@ export async function getProfile(): Promise<Profile | null> {
     .eq("id", user.id)
     .single();
 
-  return profile as Profile | null;
+  const p = profile as Profile | null;
+  if (p && p.is_active === false) {
+    return null;
+  }
+  return p;
 }
 
 // Re-export permission helpers for server-side use (API routes, server components)
 export {
   canViewAllEmployers,
+  canViewFullEmployerPipeline,
   canViewActiveOnly,
   canEditEmployers,
   canDeleteEmployers,
   canManageUsers,
+  canViewEmployerAnalytics,
 } from "@/lib/permissions";

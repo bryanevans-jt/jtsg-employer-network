@@ -11,9 +11,15 @@ const config: Config = {
       colors: {
         jtsg: {
           green: "#2d5a3d",
+          "green-dark": "#1e3f2a",
           sand: "#e8dcc4",
           sage: "#9cb4a3",
+          cream: "#faf8f4",
+          ink: "#1c1917",
         },
+      },
+      fontFamily: {
+        sans: ["var(--font-jakarta)", "system-ui", "sans-serif"],
       },
     },
   },

@@ -26,12 +26,15 @@ export async function GET() {
 
   const { data: profiles, error } = await admin
     .from("profiles")
-    .select("id, email, full_name, role, created_at")
+    .select("id, email, full_name, role, created_at, is_active")
     .order("created_at", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: "Failed to load users" }, { status: 500 });
   }
 
-  return NextResponse.json({ users: profiles as Profile[] });
+  return NextResponse.json({
+    users: profiles as Profile[],
+    currentUserId: user.id,
+  });
 }

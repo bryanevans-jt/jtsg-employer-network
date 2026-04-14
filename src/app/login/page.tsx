@@ -4,6 +4,9 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { StaffAuthShell } from "@/components/StaffAuthShell";
+import { inputClass, labelClass, btnPrimaryClass, alertErrorClass, alertSuccessClass } from "@/lib/ui";
+import { PROGRAM_NAME_NAV } from "@/lib/branding";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -16,7 +19,10 @@ function LoginForm() {
 
   useEffect(() => {
     if (searchParams.get("setup") === "1") {
-      setMessage({ type: "success", text: "Admin account created. Sign in with your email and password." });
+      setMessage({
+        type: "success",
+        text: "Admin account created. Sign in with your email and password.",
+      });
     }
     fetch("/api/setup")
       .then((r) => r.json())
@@ -62,95 +68,80 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-stone-100">
-      <div className="w-full max-w-sm">
-        <Link href="/" className="text-jtsg-green font-medium text-sm hover:underline">
-          ← JTSG Employer Network
-        </Link>
-        <div className="mt-6 rounded-xl bg-white shadow border border-stone-200 p-6">
-          <h1 className="text-xl font-bold text-stone-900">Staff login</h1>
-          <p className="mt-1 text-sm text-stone-600">
-            Sign in with your JTSG account.
-          </p>
+    <StaffAuthShell backHref="/" backLabel={`← ${PROGRAM_NAME_NAV}`}>
+      <h1 className="text-2xl font-bold tracking-tight text-jtsg-ink">Staff Sign In</h1>
 
-          <form onSubmit={handleLogin} className="mt-6 space-y-4">
-            {message && (
-              <div
-                className={`rounded-lg px-3 py-2 text-sm ${
-                  message.type === "error"
-                    ? "bg-red-50 text-red-800"
-                    : "bg-green-50 text-green-800"
-                }`}
-              >
-                {message.text}
-              </div>
-            )}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-stone-700">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm focus:border-jtsg-green focus:outline-none focus:ring-1 focus:ring-jtsg-green"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-stone-700">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm focus:border-jtsg-green focus:outline-none focus:ring-1 focus:ring-jtsg-green"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-lg bg-jtsg-green px-4 py-2.5 font-medium text-white hover:bg-jtsg-green/90 disabled:opacity-60"
-              >
-                {loading ? "Signing in…" : "Sign in"}
-              </button>
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                disabled={loading}
-                className="w-full text-sm text-jtsg-green hover:underline disabled:opacity-60"
-              >
-                Forgot password?
-              </button>
-              {setupAllowed && (
-                <p className="text-center text-sm text-stone-500">
-                  First time?{" "}
-                  <Link href="/setup" className="text-jtsg-green hover:underline">
-                    Create admin account
-                  </Link>
-                </p>
-              )}
-            </div>
-          </form>
+      <form onSubmit={handleLogin} className="mt-8 space-y-5">
+        {message ? (
+          <div
+            className={message.type === "error" ? alertErrorClass : alertSuccessClass}
+            role="status"
+          >
+            {message.text}
+          </div>
+        ) : null}
+        <div>
+          <label htmlFor="email" className={labelClass}>
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={inputClass}
+          />
         </div>
-      </div>
-    </div>
+        <div>
+          <label htmlFor="password" className={labelClass}>
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+        <div className="flex flex-col gap-3 pt-1">
+          <button type="submit" disabled={loading} className={btnPrimaryClass}>
+            {loading ? "Signing in…" : "Sign In"}
+          </button>
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            disabled={loading}
+            className="text-center text-sm font-medium text-jtsg-green hover:underline disabled:opacity-60"
+          >
+            Forgot password?
+          </button>
+          {setupAllowed ? (
+            <p className="text-center text-sm text-stone-600">
+              First time?{" "}
+              <Link href="/setup" className="font-medium text-jtsg-green hover:underline">
+                Create admin account
+              </Link>
+            </p>
+          ) : null}
+        </div>
+      </form>
+    </StaffAuthShell>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-stone-100">
-        <div className="w-full max-w-sm text-center text-stone-500">Loading…</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <StaffAuthShell backHref="/" backLabel="← Home">
+          <p className="text-center text-sm text-stone-600">Loading…</p>
+        </StaffAuthShell>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

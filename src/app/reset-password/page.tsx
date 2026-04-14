@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { StaffAuthShell } from "@/components/StaffAuthShell";
+import { inputClass, labelClass, btnPrimaryClass, alertErrorClass, alertSuccessClass } from "@/lib/ui";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -35,69 +37,58 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-stone-100">
-      <div className="w-full max-w-sm">
-        <Link href="/login" className="text-jtsg-green font-medium text-sm hover:underline">
-          ← Back to login
-        </Link>
-        <div className="mt-6 rounded-xl bg-white shadow border border-stone-200 p-6">
-          <h1 className="text-xl font-bold text-stone-900">Set new password</h1>
-          <p className="mt-1 text-sm text-stone-600">
-            Enter your new password below.
-          </p>
+    <StaffAuthShell backHref="/login" backLabel="← Back to login">
+      <h1 className="text-2xl font-bold tracking-tight text-jtsg-ink">Set New Password</h1>
+      <p className="mt-2 text-sm text-stone-600">Enter your new password below.</p>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            {message && (
-              <div
-                className={`rounded-lg px-3 py-2 text-sm ${
-                  message.type === "error"
-                    ? "bg-red-50 text-red-800"
-                    : "bg-green-50 text-green-800"
-                }`}
-              >
-                {message.text}
-              </div>
-            )}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-stone-700">
-                New password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                minLength={8}
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm focus:border-jtsg-green focus:outline-none focus:ring-1 focus:ring-jtsg-green"
-              />
-            </div>
-            <div>
-              <label htmlFor="confirm" className="block text-sm font-medium text-stone-700">
-                Confirm password
-              </label>
-              <input
-                id="confirm"
-                type="password"
-                required
-                minLength={8}
-                autoComplete="new-password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm focus:border-jtsg-green focus:outline-none focus:ring-1 focus:ring-jtsg-green"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-jtsg-green px-4 py-2.5 font-medium text-white hover:bg-jtsg-green/90 disabled:opacity-60"
-            >
-              {loading ? "Updating…" : "Update password"}
-            </button>
-          </form>
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        {message ? (
+          <div
+            className={message.type === "error" ? alertErrorClass : alertSuccessClass}
+            role="status"
+          >
+            {message.text}
+          </div>
+        ) : null}
+        <div>
+          <label htmlFor="password" className={labelClass}>
+            New password
+          </label>
+          <input
+            id="password"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={inputClass}
+          />
         </div>
-      </div>
-    </div>
+        <div>
+          <label htmlFor="confirm" className={labelClass}>
+            Confirm password
+          </label>
+          <input
+            id="confirm"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+        <button type="submit" disabled={loading} className={btnPrimaryClass}>
+          {loading ? "Updating…" : "Update Password"}
+        </button>
+        <p className="text-center text-sm text-stone-600">
+          <Link href="/login" className="font-medium text-jtsg-green hover:underline">
+            Return to Staff Sign In
+          </Link>
+        </p>
+      </form>
+    </StaffAuthShell>
   );
 }

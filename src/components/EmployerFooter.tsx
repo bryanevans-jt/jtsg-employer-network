@@ -1,4 +1,4 @@
-export const APP_VERSION = "v0.7.18";
+export const APP_VERSION = "v0.9.0";
 
 export function EmployerFooter() {
   const year = new Date().getFullYear();

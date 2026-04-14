@@ -1,96 +1,74 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  canViewAllEmployers,
-  canViewActiveOnly,
-} from "@/lib/auth";
 import type { Employer, AppRole } from "@/types/database";
+import { loadStaffContext } from "@/lib/api-guards";
+import { canViewActiveOnly, canViewFullEmployerPipeline } from "@/lib/permissions";
+import {
+  applyEmployerListFilters,
+  parseStatusParams,
+} from "@/lib/employers-list-query";
+import { logAppEvent } from "@/lib/observability";
+import { parseEmployerListSort } from "@/lib/employers-sort-fields";
+
+const DEFAULT_PAGE_SIZE = 25;
+const MAX_PAGE_SIZE = 100;
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const ctx = await loadStaffContext();
+  if (!ctx.ok) return ctx.response;
 
-  const admin = createAdminClient();
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const { admin, profile } = ctx;
+  const role = profile.role as AppRole;
+  const sp = request.nextUrl.searchParams;
 
-  if (!profile) {
+  const sort = parseEmployerListSort(sp.get("sort"));
+  const order = sp.get("order") === "asc" ? "asc" : "desc";
+
+  const page = Math.max(1, parseInt(sp.get("page") || "1", 10) || 1);
+  const pageSize = Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(
+      1,
+      parseInt(sp.get("pageSize") || String(DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE
+    )
+  );
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const applied = applyEmployerListFilters(admin, role, {
+    q: sp.get("q") || undefined,
+    city: sp.get("city") || undefined,
+    county: sp.get("county") || undefined,
+    industry: sp.get("industry") || undefined,
+    dateFrom: sp.get("dateFrom") || undefined,
+    dateTo: sp.get("dateTo") || undefined,
+    statuses: parseStatusParams(sp),
+  });
+
+  if (applied.forbidden) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const role = profile.role as AppRole;
-  const sort = request.nextUrl.searchParams.get("sort") || "created_at";
-  const order = request.nextUrl.searchParams.get("order") || "desc";
-  const validSort =
-    ["company_name", "address_city", "address_county", "industry", "created_at"].includes(sort)
-      ? sort
-      : "created_at";
-  const validOrder = order === "asc" ? "asc" : "desc";
+  let query = applied.query.order(sort, { ascending: order === "asc" });
+  query = query.range(from, to);
 
-  let query = admin.from("employers").select("*");
-
-  if (canViewActiveOnly(role)) {
-    query = query.eq("status", "Active Partner");
-  }
-
-  // Admin, Director, CRS: New Submissions first (newest at top), then Active Partners by chosen sort
-  if (canViewAllEmployers(role)) {
-    const { data: all, error: err } = await query;
-    if (err) {
-      console.error("Employers list error:", err);
-      return NextResponse.json({ error: "Failed to load employers" }, { status: 500 });
-    }
-    const list = (all as Employer[]) ?? [];
-    const newSub = list
-      .filter((e) => e.status === "New Submission")
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    const active = list
-      .filter((e) => e.status === "Active Partner")
-      .sort((a, b) => {
-        const av = (a as unknown as Record<string, unknown>)[validSort];
-        const bv = (b as unknown as Record<string, unknown>)[validSort];
-        if (av == null && bv == null) return 0;
-        if (av == null) return validOrder === "asc" ? 1 : -1;
-        if (bv == null) return validOrder === "asc" ? -1 : 1;
-        const cmp = String(av).localeCompare(String(bv), undefined, { numeric: true });
-        return validOrder === "asc" ? cmp : -cmp;
-      });
-    const employers = [...newSub, ...active];
-    return NextResponse.json({
-      employers,
-      canViewAll: true,
-      role,
-      sort: validSort,
-      order: validOrder,
-    });
-  }
-
-  const { data, error } = await query.order(validSort, {
-    ascending: validOrder === "asc",
-  });
+  const { data, error, count } = await query;
 
   if (error) {
-    console.error("Employers list error:", error);
+    logAppEvent("employers_list_failed", { page, pageSize }, error);
     return NextResponse.json({ error: "Failed to load employers" }, { status: 500 });
   }
 
   const employers = (data as Employer[]) ?? [];
-  const canViewAll = canViewAllEmployers(role);
+  const canViewAll = canViewFullEmployerPipeline(role) && !canViewActiveOnly(role);
 
   return NextResponse.json({
     employers,
+    total: count ?? employers.length,
+    page,
+    pageSize,
     canViewAll,
     role,
-    sort: validSort,
-    order: validOrder,
+    sort,
+    order,
   });
 }

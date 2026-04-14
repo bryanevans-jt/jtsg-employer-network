@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { SetupGuard } from "./SetupGuard";
+import { StaffAuthShell } from "@/components/StaffAuthShell";
+import { inputClass, labelClass, btnPrimaryClass, alertErrorClass, alertSuccessClass } from "@/lib/ui";
 
 export default function SetupPage() {
   const [email, setEmail] = useState("");
@@ -37,68 +39,60 @@ export default function SetupPage() {
 
   return (
     <SetupGuard>
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-stone-100">
-      <div className="w-full max-w-sm">
-        <Link href="/" className="text-jtsg-green font-medium text-sm hover:underline">
-          ← JTSG Employer Network
-        </Link>
-        <div className="mt-6 rounded-xl bg-white shadow border border-stone-200 p-6">
-          <h1 className="text-xl font-bold text-stone-900">Create admin account</h1>
-          <p className="mt-1 text-sm text-stone-600">
-            No accounts exist yet. Create the first admin account to manage the app.
-          </p>
+      <StaffAuthShell backHref="/" backLabel="← Home">
+        <h1 className="text-2xl font-bold tracking-tight text-jtsg-ink">Create Admin Account</h1>
+        <p className="mt-2 text-sm leading-relaxed text-stone-600">
+          No accounts exist yet. Create the first admin account to manage the app.
+        </p>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            {message && (
-              <div
-                className={`rounded-lg px-3 py-2 text-sm ${
-                  message.type === "error"
-                    ? "bg-red-50 text-red-800"
-                    : "bg-green-50 text-green-800"
-                }`}
-              >
-                {message.text}
-              </div>
-            )}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-stone-700">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm focus:border-jtsg-green focus:outline-none focus:ring-1 focus:ring-jtsg-green"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-stone-700">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-stone-300 px-3 py-2 shadow-sm focus:border-jtsg-green focus:outline-none focus:ring-1 focus:ring-jtsg-green"
-              />
-              <p className="mt-1 text-xs text-stone-500">At least 8 characters</p>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-jtsg-green px-4 py-2.5 font-medium text-white hover:bg-jtsg-green/90 disabled:opacity-60"
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+          {message ? (
+            <div
+              className={message.type === "error" ? alertErrorClass : alertSuccessClass}
+              role="status"
             >
-              {loading ? "Creating…" : "Create admin account"}
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
+              {message.text}
+            </div>
+          ) : null}
+          <div>
+            <label htmlFor="email" className={labelClass}>
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className={labelClass}>
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={inputClass}
+            />
+            <p className="mt-1.5 text-xs text-stone-500">At least 8 characters</p>
+          </div>
+          <button type="submit" disabled={loading} className={btnPrimaryClass}>
+            {loading ? "Creating…" : "Create Admin Account"}
+          </button>
+          <p className="text-center text-sm text-stone-600">
+            Already set up?{" "}
+            <Link href="/login" className="font-medium text-jtsg-green hover:underline">
+              Staff Sign In
+            </Link>
+          </p>
+        </form>
+      </StaffAuthShell>
     </SetupGuard>
   );
 }

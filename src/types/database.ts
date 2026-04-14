@@ -1,4 +1,6 @@
-export type EmployerStatus = "New Submission" | "Active Partner";
+import type { EmployerStatus } from "@/lib/employer-status";
+
+export type { EmployerStatus };
 
 export type AppRole =
   | "admin"
@@ -26,6 +28,9 @@ export interface Employer {
   contact_title: string | null;
   latitude: number | null;
   longitude: number | null;
+  internal_notes: string | null;
+  next_follow_up_date: string | null;
+  assigned_staff_id: string | null;
 }
 
 export interface EmployerInsert {
@@ -43,6 +48,16 @@ export interface EmployerInsert {
   contact_title?: string | null;
 }
 
+export interface EmployerActivity {
+  id: string;
+  employer_id: string;
+  actor_id: string | null;
+  action: string;
+  details: Record<string, unknown>;
+  created_at: string;
+}
+
+
 export interface Profile {
   id: string;
   email: string;
@@ -50,6 +65,8 @@ export interface Profile {
   role: AppRole;
   created_at: string;
   updated_at: string;
+  /** When false, dashboard access is blocked (see migration + getProfile). */
+  is_active?: boolean;
 }
 
 export const ROLE_LABELS: Record<AppRole, string> = {

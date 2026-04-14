@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { btnPrimarySmClass } from "@/lib/ui";
 import dynamic from "next/dynamic";
 import type { Employer } from "@/types/database";
 
@@ -15,10 +16,16 @@ const MapInner = dynamic(() => import("./EmployerMapInner"), {
 
 interface EmployerMapProps {
   employers: Employer[];
+  /** When false, map is view-only (e.g. Employment Specialist). Default true. */
+  canGeocode?: boolean;
   onGeocoded?: () => void;
 }
 
-export function EmployerMap({ employers, onGeocoded }: EmployerMapProps) {
+export function EmployerMap({
+  employers,
+  canGeocode = true,
+  onGeocoded,
+}: EmployerMapProps) {
   const [employersWithCoords, setEmployersWithCoords] = useState<Employer[]>(
     () => employers.filter((e) => e.latitude != null && e.longitude != null)
   );
@@ -72,7 +79,7 @@ export function EmployerMap({ employers, onGeocoded }: EmployerMapProps) {
 
   return (
     <div className="h-full w-full flex flex-col">
-      {needGeocoding.length > 0 && (
+      {needGeocoding.length > 0 && canGeocode && (
         <div className="flex items-center justify-between gap-2 p-2 bg-stone-50 border-b border-stone-200">
           <span className="text-sm text-stone-600">
             {employersWithCoords.length} of {employers.length} employers on map.
@@ -83,10 +90,16 @@ export function EmployerMap({ employers, onGeocoded }: EmployerMapProps) {
             type="button"
             onClick={runGeocoding}
             disabled={geocoding}
-            className="rounded bg-jtsg-green px-3 py-1.5 text-sm text-white hover:bg-jtsg-green/90 disabled:opacity-60"
+            className={`${btnPrimarySmClass} px-3 py-1.5 text-sm disabled:opacity-60`}
           >
             {geocoding ? "Locating…" : "Locate addresses"}
           </button>
+        </div>
+      )}
+      {needGeocoding.length > 0 && !canGeocode && (
+        <div className="p-2 bg-stone-50 border-b border-stone-200 text-sm text-stone-600">
+          {employersWithCoords.length} of {employers.length} on map (some addresses are not
+          shown; staff with edit access can locate them).
         </div>
       )}
       <div className="flex-1 min-h-0">

@@ -29,11 +29,14 @@ export async function PATCH(
   }
 
   const body = await request.json().catch(() => ({}));
-  const updates: { full_name?: string; role?: AppRole } = {};
+  const updates: { full_name?: string | null; role?: AppRole; is_active?: boolean } = {};
   if (body.full_name !== undefined) updates.full_name = body.full_name?.trim() || null;
   if (body.role !== undefined) {
     const validRoles: AppRole[] = ["admin", "director", "supervisor", "employment_specialist", "crs"];
     if (validRoles.includes(body.role)) updates.role = body.role;
+  }
+  if (body.is_active !== undefined) {
+    updates.is_active = Boolean(body.is_active);
   }
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });

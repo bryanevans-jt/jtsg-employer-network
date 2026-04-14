@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendNewEmployerNotificationToCRS } from "@/lib/email";
+import {
+  sendEmployerSignupConfirmation,
+  sendNewEmployerNotificationToCRS,
+} from "@/lib/email";
+import { logAppEvent } from "@/lib/observability";
 import { normalizeAddress } from "@/lib/address";
 import type { EmployerInsert } from "@/types/database";
 
@@ -63,7 +67,7 @@ export async function POST(request: NextRequest) {
         contact_email: contact_email.trim(),
         contact_title: contact_title?.trim() || null,
       })
-      .select("id, company_name, created_at")
+      .select("id, company_name, created_at, address_county")
       .single();
 
     if (error) {
@@ -74,11 +78,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await sendNewEmployerNotificationToCRS(employer).catch((e) =>
-      console.error("CRS notification email failed:", e)
-    );
+    const [emailResult] = await Promise.all([
+      sendNewEmployerNotificationToCRS(employer).catch((e) => {
+        logAppEvent("crs_email_unhandled", { employerId: employer.id }, e);
+        return { sent: false as const, reason: "send_failed" as const };
+      }),
+      sendEmployerSignupConfirmation({
+        to: contact_email.trim(),
+        companyName: company_name.trim(),
+        contactName: contact_name.trim(),
+      }).catch((e) => {
+        logAppEvent("employer_confirmation_unhandled", { employerId: employer.id }, e);
+        return null;
+      }),
+    ]);
 
-    return NextResponse.json({ ok: true, id: employer.id });
+    return NextResponse.json({
+      ok: true,
+      id: employer.id,
+      crsEmailSent: emailResult.sent,
+      crsEmailNote: emailResult.sent
+        ? undefined
+        : emailResult.reason === "no_api_key"
+          ? "Staff email alerts are not fully configured; your submission was saved."
+          : emailResult.reason === "no_crs_recipients"
+            ? "No active CRS contacts are available to notify; your submission was saved."
+            : emailResult.reason === "queued_for_digest"
+              ? undefined
+              : emailResult.reason === "daily_quota_reached"
+                ? undefined
+            : emailResult.reason === "territory_no_crs"
+              ? undefined
+              : "We could not notify staff by email; your submission was saved.",
+    });
   } catch (e) {
     console.error("POST /api/employers", e);
     return NextResponse.json(

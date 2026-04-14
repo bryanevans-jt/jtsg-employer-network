@@ -6,10 +6,17 @@
   --jtsg-green: #2d5a3d;
   --jtsg-sand: #e8dcc4;
   --jtsg-sage: #9cb4a3;
+  --jtsg-cream: #faf8f4;
+  --jtsg-ink: #1c1917;
 }
 
 body {
-  @apply bg-stone-50 text-stone-900 antialiased;
+  @apply bg-jtsg-cream/50 text-jtsg-ink antialiased;
+}
+
+::selection {
+  background-color: rgb(156 180 163 / 0.45);
+  color: var(--jtsg-ink);
 }
 
 /* Leaflet needs explicit height when in a container */
@@ -17,4 +24,15 @@ body {
   height: 100%;
   width: 100%;
   z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

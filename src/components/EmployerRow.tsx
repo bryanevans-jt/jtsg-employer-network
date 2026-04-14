@@ -1,6 +1,7 @@
 "use client";
 
 import type { Employer } from "@/types/database";
+import { statusBadgeClass } from "@/lib/employer-status";
 
 interface EmployerRowProps {
   employer: Employer;
@@ -12,18 +13,18 @@ interface EmployerRowProps {
 
 export function EmployerRow({
   employer,
-  canEdit,
-  canDelete,
+  canEdit: _canEdit,
+  canDelete: _canDelete,
   onView,
-  onUpdate,
+  onUpdate: _onUpdate,
 }: EmployerRowProps) {
   return (
-    <tr className="hover:bg-stone-50/50">
+    <tr className="transition-colors hover:bg-stone-50/80">
       <td className="px-4 py-3">
         <button
           type="button"
           onClick={onView}
-          className="text-left font-medium text-jtsg-green hover:underline"
+          className="text-left font-medium text-jtsg-green underline decoration-jtsg-green/30 underline-offset-2 hover:decoration-jtsg-green"
         >
           {employer.company_name}
         </button>
@@ -39,20 +40,19 @@ export function EmployerRow({
       </td>
       <td className="px-4 py-3">
         <span
-          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            employer.status === "New Submission"
-              ? "bg-amber-100 text-amber-800"
-              : "bg-green-100 text-green-800"
-          }`}
+          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadgeClass(employer.status)}`}
         >
           {employer.status}
         </span>
+      </td>
+      <td className="px-4 py-3 text-sm text-stone-600 hidden xl:table-cell whitespace-nowrap">
+        {new Date(employer.created_at).toLocaleDateString()}
       </td>
       <td className="px-4 py-3 text-right">
         <button
           type="button"
           onClick={onView}
-          className="text-sm text-jtsg-green hover:underline"
+          className="text-sm font-medium text-jtsg-green underline decoration-jtsg-green/30 underline-offset-2 hover:decoration-jtsg-green"
         >
           View
         </button>

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { EmployerFooter } from "@/components/EmployerFooter";
+import { PublicSiteHeader } from "@/components/PublicSiteHeader";
+import { PROGRAM_NAME } from "@/lib/branding";
 
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen flex flex-col">
-      {/* Background logo: 20% opacity (use a PNG with transparent background) */}
+    <div className="relative flex min-h-screen flex-col">
       <div
         className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center"
         aria-hidden
@@ -13,49 +14,46 @@ export default function HomePage() {
         <img
           src="/jtsg-logo.png"
           alt=""
-          className="h-full w-full max-h-[90vh] max-w-3xl object-contain opacity-20"
+          className="h-full max-h-[88vh] w-full max-w-3xl object-contain opacity-[0.14]"
         />
       </div>
 
-      <header className="relative z-10 bg-jtsg-green text-white shadow">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <h1 className="text-2xl font-bold tracking-tight">
-            Joshua Tree Service Group
-          </h1>
-          <p className="text-jtsg-sand/90 text-sm mt-1">
-            Employer Network
-          </p>
-        </div>
-      </header>
+      <div className="relative z-10 flex min-h-screen flex-col">
+        <PublicSiteHeader
+          showBackLink={false}
+          title="Joshua Tree Service Group"
+          subtitle={PROGRAM_NAME}
+        />
 
-      <main className="relative z-10 flex-1 max-w-4xl w-full mx-auto px-4 py-8">
-        <p className="text-stone-600 mb-8">
-          JTSG is a service provider for the Georgia Vocational Rehabilitation
-          Agency. We help clients learn job skills and find meaningful
-          employment. By joining our employer network, you’re not guaranteeing a
-          job to anyone—you’re simply indicating that you’re open to working with
-          us.
-        </p>
+        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:py-12">
+          <div className="rounded-2xl border border-stone-200/80 bg-white/85 p-6 shadow-sm backdrop-blur-sm sm:p-8">
+            <p className="text-base leading-relaxed text-stone-700">
+              JTSG is a service provider for the Georgia Vocational Rehabilitation Agency. We help
+              clients learn job skills and find meaningful employment. By joining the{" "}
+              {PROGRAM_NAME}, you are not guaranteeing a job to anyone—you are simply indicating
+              that you are open to working with us when roles may be a fit.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
+              <Link
+                href="/join"
+                className="inline-flex items-center justify-center rounded-lg bg-jtsg-green px-6 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-jtsg-green-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-jtsg-green focus-visible:ring-offset-2"
+              >
+                Join as a partner
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-lg border border-stone-300 bg-white px-6 py-3 text-center text-sm font-semibold text-stone-800 shadow-sm transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-jtsg-green/25"
+              >
+                Staff Sign In
+              </Link>
+            </div>
+          </div>
+        </main>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Link
-            href="/join"
-            className="inline-flex items-center justify-center rounded-lg bg-jtsg-green px-6 py-3 text-white font-medium hover:bg-jtsg-green/90 transition"
-          >
-            Join the network
-          </Link>
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center rounded-lg border border-stone-300 bg-white px-6 py-3 text-stone-700 font-medium hover:bg-stone-50 transition"
-          >
-            Staff login
-          </Link>
-        </div>
-      </main>
-
-      <footer className="relative z-10">
-        <EmployerFooter />
-      </footer>
+        <footer className="relative z-10 mt-auto">
+          <EmployerFooter />
+        </footer>
+      </div>
     </div>
   );
 }

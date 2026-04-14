@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
     email,
     full_name,
     role,
+    is_active: true,
   });
 
   if (profileError) {
